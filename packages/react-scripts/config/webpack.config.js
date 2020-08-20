@@ -17,7 +17,7 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 const CaseSensitivePathsPlugin = require('case-sensitive-paths-webpack-plugin');
 const InlineChunkHtmlPlugin = require('react-dev-utils/InlineChunkHtmlPlugin');
 const TerserPlugin = require('terser-webpack-plugin');
-const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+// const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const OptimizeCSSAssetsPlugin = require('optimize-css-assets-webpack-plugin');
 const safePostCssParser = require('postcss-safe-parser');
 const ManifestPlugin = require('webpack-manifest-plugin');
@@ -69,6 +69,10 @@ const cssModuleRegex = /\.module\.css$/;
 const sassRegex = /\.(scss|sass)$/;
 const sassModuleRegex = /\.module\.(scss|sass)$/;
 
+// Prevent code splitting
+// Prevent extract CSS
+// Reference: https://github.com/facebook/create-react-app/issues/3365#issuecomment-340644832
+
 // This is the production and development configuration.
 // It is focused on developer experience, fast rebuilds, and a minimal bundle.
 module.exports = function (webpackEnv) {
@@ -91,7 +95,7 @@ module.exports = function (webpackEnv) {
   // common function to get style loaders
   const getStyleLoaders = (cssOptions, preProcessor) => {
     const loaders = [
-      isEnvDevelopment && require.resolve('style-loader'),
+      // isEnvDevelopment && require.resolve('style-loader'),
       // isEnvProduction && {
       //   loader: MiniCssExtractPlugin.loader,
       //   // css is located in `static/css`, use '../../' to locate index.html folder
@@ -100,6 +104,7 @@ module.exports = function (webpackEnv) {
       //     ? { publicPath: '../../' }
       //     : {},
       // },
+      require.resolve('style-loader'),
       {
         loader: require.resolve('css-loader'),
         options: cssOptions,
@@ -194,7 +199,7 @@ module.exports = function (webpackEnv) {
       // There will be one main bundle, and one file per asynchronous chunk.
       // In development, it does not produce real files.
       filename: isEnvProduction
-        ? 'static/js/[name].[contenthash:8].js'
+        ? 'static/js/bundle.min.js'
         : isEnvDevelopment && 'static/js/bundle.js',
       // TODO: remove this when upgrading to webpack 5
       futureEmitAssets: true,
@@ -667,13 +672,15 @@ module.exports = function (webpackEnv) {
       // See https://github.com/facebook/create-react-app/issues/186
       isEnvDevelopment &&
         new WatchMissingNodeModulesPlugin(paths.appNodeModules),
-      isEnvProduction &&
-        new MiniCssExtractPlugin({
-          // Options similar to the same options in webpackOptions.output
-          // both options are optional
-          filename: 'static/css/[name].[contenthash:8].css',
-          chunkFilename: 'static/css/[name].[contenthash:8].chunk.css',
-        }),
+
+      // Prevent extract CSS
+      // isEnvProduction &&
+      //   new MiniCssExtractPlugin({
+      //     // Options similar to the same options in webpackOptions.output
+      //     // both options are optional
+      //     filename: 'static/css/bunle.min.css',
+      //     chunkFilename: 'static/css/[name].[contenthash:8].chunk.css',
+      //   }),
       // Generate an asset manifest file with the following content:
       // - "files" key: Mapping of all asset filenames to their corresponding
       //   output file so that tools can pick it up without having to parse
