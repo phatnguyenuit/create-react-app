@@ -60,9 +60,13 @@ const cssModuleRegex = /\.module\.css$/;
 const sassRegex = /\.(scss|sass)$/;
 const sassModuleRegex = /\.module\.(scss|sass)$/;
 
+// Prevent code splitting
+// Prevent extract CSS
+// Reference: https://github.com/facebook/create-react-app/issues/3365#issuecomment-340644832
+
 // This is the production and development configuration.
 // It is focused on developer experience, fast rebuilds, and a minimal bundle.
-module.exports = function(webpackEnv) {
+module.exports = function (webpackEnv) {
   const isEnvDevelopment = webpackEnv === 'development';
   const isEnvProduction = webpackEnv === 'production';
 
@@ -80,15 +84,16 @@ module.exports = function(webpackEnv) {
   // common function to get style loaders
   const getStyleLoaders = (cssOptions, preProcessor) => {
     const loaders = [
-      isEnvDevelopment && require.resolve('style-loader'),
-      isEnvProduction && {
-        loader: MiniCssExtractPlugin.loader,
-        // css is located in `static/css`, use '../../' to locate index.html folder
-        // in production `paths.publicUrlOrPath` can be a relative path
-        options: paths.publicUrlOrPath.startsWith('.')
-          ? { publicPath: '../../' }
-          : {},
-      },
+      // isEnvDevelopment && require.resolve('style-loader'),
+      // isEnvProduction && {
+      //   loader: MiniCssExtractPlugin.loader,
+      //   // css is located in `static/css`, use '../../' to locate index.html folder
+      //   // in production `paths.publicUrlOrPath` can be a relative path
+      //   options: paths.publicUrlOrPath.startsWith('.')
+      //     ? { publicPath: '../../' }
+      //     : {},
+      // },
+      require.resolve('style-loader'),
       {
         loader: require.resolve('css-loader'),
         options: cssOptions,
@@ -176,7 +181,7 @@ module.exports = function(webpackEnv) {
       // There will be one main bundle, and one file per asynchronous chunk.
       // In development, it does not produce real files.
       filename: isEnvProduction
-        ? 'static/js/[name].[contenthash:8].js'
+        ? 'static/js/bundle.min.js'
         : isEnvDevelopment && 'static/js/bundle.js',
       // TODO: remove this when upgrading to webpack 5
       futureEmitAssets: true,
@@ -190,12 +195,13 @@ module.exports = function(webpackEnv) {
       publicPath: paths.publicUrlOrPath,
       // Point sourcemap entries to original disk location (format as URL on Windows)
       devtoolModuleFilenameTemplate: isEnvProduction
-        ? info =>
+        ? (info) =>
             path
               .relative(paths.appSrc, info.absoluteResourcePath)
               .replace(/\\/g, '/')
         : isEnvDevelopment &&
-          (info => path.resolve(info.absoluteResourcePath).replace(/\\/g, '/')),
+          ((info) =>
+            path.resolve(info.absoluteResourcePath).replace(/\\/g, '/')),
       // Prevents conflicts when multiple webpack runtimes (from different apps)
       // are used on the same page.
       jsonpFunction: `webpackJsonp${appPackageJson.name}`,
@@ -270,16 +276,22 @@ module.exports = function(webpackEnv) {
       // Automatically split vendor and commons
       // https://twitter.com/wSokra/status/969633336732905474
       // https://medium.com/webpack/webpack-4-code-splitting-chunk-graph-and-the-splitchunks-optimization-be739a861366
+      // splitChunks: {
+      //   chunks: 'all',
+      //   name: false,
+      // },
       splitChunks: {
-        chunks: 'all',
-        name: false,
+        cacheGroups: {
+          default: false,
+        },
       },
       // Keep the runtime chunk separated to enable long term caching
       // https://twitter.com/wSokra/status/969679223278505985
       // https://github.com/facebook/create-react-app/issues/5358
-      runtimeChunk: {
-        name: entrypoint => `runtime-${entrypoint.name}`,
-      },
+      // runtimeChunk: {
+      //   name: (entrypoint) => `runtime-${entrypoint.name}`,
+      // },
+      runtimeChunk: false,
     },
     resolve: {
       // This allows you to set a fallback for where webpack should look for modules.
@@ -296,8 +308,8 @@ module.exports = function(webpackEnv) {
       // `web` extension prefixes have been added for better support
       // for React Native Web.
       extensions: paths.moduleFileExtensions
-        .map(ext => `.${ext}`)
-        .filter(ext => useTypeScript || !ext.includes('ts')),
+        .map((ext) => `.${ext}`)
+        .filter((ext) => useTypeScript || !ext.includes('ts')),
       alias: {
         // Support React Native Web
         // https://www.smashingmagazine.com/2016/08/a-glimpse-into-the-future-with-react-native-for-web/
@@ -617,13 +629,15 @@ module.exports = function(webpackEnv) {
       // See https://github.com/facebook/create-react-app/issues/186
       isEnvDevelopment &&
         new WatchMissingNodeModulesPlugin(paths.appNodeModules),
-      isEnvProduction &&
-        new MiniCssExtractPlugin({
-          // Options similar to the same options in webpackOptions.output
-          // both options are optional
-          filename: 'static/css/[name].[contenthash:8].css',
-          chunkFilename: 'static/css/[name].[contenthash:8].chunk.css',
-        }),
+
+      // Prevent extract CSS
+      // isEnvProduction &&
+      //   new MiniCssExtractPlugin({
+      //     // Options similar to the same options in webpackOptions.output
+      //     // both options are optional
+      //     filename: 'static/css/[name].[contenthash:8].css',
+      //     chunkFilename: 'static/css/[name].[contenthash:8].chunk.css',
+      //   }),
       // Generate an asset manifest file with the following content:
       // - "files" key: Mapping of all asset filenames to their corresponding
       //   output file so that tools can pick it up without having to parse
@@ -639,7 +653,7 @@ module.exports = function(webpackEnv) {
             return manifest;
           }, seed);
           const entrypointFiles = entrypoints.main.filter(
-            fileName => !fileName.endsWith('.map')
+            (fileName) => !fileName.endsWith('.map')
           );
 
           return {
